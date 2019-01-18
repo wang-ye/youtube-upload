@@ -17,6 +17,7 @@ Upload a video to Youtube from the command-line.
 
 import os
 import sys
+import time
 import optparse
 import collections
 import webbrowser
@@ -52,6 +53,7 @@ EXIT_CODES = {
 }
 
 WATCH_VIDEO_URL = "https://www.youtube.com/watch?v={id}"
+MAX_TRIALS = 3
 
 debug = lib.debug
 struct = collections.namedtuple
@@ -181,16 +183,26 @@ def run_main(parser, options, args, output=sys.stdout):
             video_url = WATCH_VIDEO_URL.format(id=video_id)
             debug("Video URL: {0}".format(video_url))
             if options.open_link:
-                open_link(video_url) #Opens the Youtube Video's link in a webbrowser
+                open_link(video_url)  # Opens the Youtube Video's link in a webbrowser
 
             if options.thumb:
-                youtube.thumbnails().set(videoId=video_id, media_body=options.thumb).execute()
+
+                for i in range(MAX_TRIALS):
+                    try:
+                        youtube.thumbnails().set(videoId=video_id, media_body=options.thumb).execute()
+                        break
+                    except Exception as e:
+                        wait_time = 10 + 4 ** (i + 1)
+                        debug(f"error happend {e}, waiting for {wait_time}")
+                        time.sleep(wait_time)
+
             if options.playlist:
                 playlists.add_video_to_playlist(youtube, video_id,
                     title=lib.to_utf8(options.playlist), privacy=options.privacy)
             output.write(video_id + "\n")
     else:
         raise AuthenticationError("Cannot get youtube resource")
+
 
 def main(arguments):
     """Upload videos to Youtube."""
