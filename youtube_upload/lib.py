@@ -17,10 +17,10 @@ def default_sigint():
         yield
     finally:
         signal.signal(signal.SIGINT, original_sigint_handler)
-        
+
 def get_encoding():
     return locale.getpreferredencoding()
-    
+
 def to_utf8(s):
     """Re-encode string from the default system encoding to UTF-8."""
     current = locale.getpreferredencoding()
@@ -30,10 +30,12 @@ def to_utf8(s):
         return bytes.decode(s)
     else:
         return s
-       
+
+
 def debug(obj, fd=sys.stderr):
     """Write obj to standard error."""
     print(obj, file=fd)
+
 
 def catch_exceptions(exit_codes, fun, *args, **kwargs):
     """
@@ -84,10 +86,10 @@ def retriable_exceptions(fun, retriable_exceptions, max_retries=None):
                 seconds = random.uniform(0, 2**retry)
                 message = ("[Retryable error {current_retry}/{total_retries}] " +
                     "{error_type} ({error_msg}). Wait {wait_time} seconds").format(
-                    current_retry=retry, 
-                    total_retries=max_retries or "-", 
-                    error_type=type(exc).__name__, 
-                    error_msg=str(exc) or "-", 
+                    current_retry=retry,
+                    total_retries=max_retries or "-",
+                    error_type=type(exc).__name__,
+                    error_msg=str(exc) or "-",
                     wait_time="%.1f" % seconds,
                 )
                 debug(message)

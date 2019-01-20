@@ -174,7 +174,21 @@ def parse_options_error(parser, options):
         msg = "Some required option are missing: {0}".format(", ".join(missing))
         raise OptionsError(msg)
 
-def run_main(parser, options, args, output=sys.stdout):
+
+def run_delete_main(parser, options, args, output=sys.stdout):
+    youtube = get_youtube_handler(options)
+    if not youtube:
+        raise AuthenticationError("Cannot get youtube resource")
+
+    debug("Going to Delete Video URL: {0}".format(options.delete_id))
+    try:
+        youtube.videos().delete(id=options.delete_id, onBehalfOfContentOwner=None).execute()
+        debug(f"Video {options.delete_id} removed successfully.")
+    except Exception as e:
+        debug(f"error happend {e}, stop.")
+
+
+def run_upload_main(parser, options, args, output=sys.stdout):
     """Run the main scripts from the parsed options/args."""
     parse_options_error(parser, options)
     youtube = get_youtube_handler(options)
@@ -188,10 +202,10 @@ def run_main(parser, options, args, output=sys.stdout):
                 open_link(video_url)  # Opens the Youtube Video's link in a webbrowser
 
             if options.thumb:
-
                 for i in range(MAX_TRIALS):
                     try:
                         youtube.thumbnails().set(videoId=video_id, media_body=options.thumb).execute()
+                        debug(f"Successfully uploaded video with id {video_id}")
                         break
                     except Exception as e:
                         wait_time = 10 + 4 ** (i + 1)
@@ -214,6 +228,7 @@ def main(arguments):
     parser = optparse.OptionParser(usage)
 
     # Video metadata
+    parser.add_option('--delete-id', type="string", dest="delete_id", help="Video id to delete")
     parser.add_option('-t', '--title', dest='title', type="string",
         help='Video title')
     parser.add_option('-c', '--category', dest='category', type="string",
@@ -273,13 +288,20 @@ def main(arguments):
             options.description = file.read()
 
     try:
-        run_main(parser, options, args)
+        if options.delete_id:
+            debug("Running delete.")
+            run_delete_main(parser, options, args)
+        else:
+            debug("Running upload.")
+            run_upload_main(parser, options, args)
     except googleapiclient.errors.HttpError as error:
         response = bytes.decode(error.content, encoding=lib.get_encoding()).strip()
         raise RequestError(u"Server response: {0}".format(response))
 
+
 def run():
     sys.exit(lib.catch_exceptions(EXIT_CODES, main, sys.argv[1:]))
+
 
 if __name__ == '__main__':
     run()
