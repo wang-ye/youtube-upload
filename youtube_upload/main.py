@@ -22,6 +22,7 @@ import optparse
 import collections
 import webbrowser
 from io import open
+import re
 
 import googleapiclient.errors
 import oauth2client
@@ -103,6 +104,7 @@ def get_category_id(category):
             msg = "{0} is not a valid category".format(category)
             raise InvalidCategory(msg)
 
+
 def upload_youtube_video(youtube, options, video_path, total_videos, index):
     """Upload video with index (for split videos)."""
     u = lib.to_utf8
@@ -112,9 +114,9 @@ def upload_youtube_video(youtube, options, video_path, total_videos, index):
     else:
         description = options.description
     if options.publish_at:
-      debug("Your video will remain private until specified date.")
+        debug("Your video will remain private until specified date.")
 
-    tags = [u(s.strip()) for s in (options.tags or "").split(",")]
+    tags = [u(s.strip()) for s in re.split(',|，', options.tags or "")]
     ns = dict(title=title, n=index+1, total=total_videos)
     title_template = u(options.title_template)
     complete_title = (title_template.format(**ns) if total_videos > 1 else title)
