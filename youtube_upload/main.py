@@ -245,7 +245,7 @@ def main(arguments):
 
     Upload videos to Youtube."""
     parser = optparse.OptionParser(usage)
-    parser.add_option('-op', '--operation', type='string', dest='operation', help='operation type', default='upload', choices=('upload', 'delete_video', 'update_video'))
+    parser.add_option('', '--operation', dest='operation', help='operation type', metavar="string", default='upload', choices=('upload', 'delete_video', 'update_video'))
     parser.add_option('--update-id', type="string", dest="update_id", help="Video id to update")
     # Video metadata
     parser.add_option('--delete-id', type="string", dest="delete_id", help="Video id to delete")
