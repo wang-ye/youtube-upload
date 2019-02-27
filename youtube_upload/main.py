@@ -314,7 +314,7 @@ def main(arguments):
         elif options.operation == 'upload':
             debug("Running upload.")
             run_upload_main(parser, options, args)
-        else options.operation == 'update_video':
+        elif options.operation == 'update_video':
             run_update_main(parser, options, args)
     except googleapiclient.errors.HttpError as error:
         response = bytes.decode(error.content, encoding=lib.get_encoding()).strip()
