@@ -41,10 +41,12 @@ try:
 except ImportError:
     progressbar = None
 
-class InvalidCategory(Exception): pass
-class OptionsError(Exception): pass
-class AuthenticationError(Exception): pass
-class RequestError(Exception): pass
+
+class InvalidCategory(Exception):  pass
+class OptionsError(Exception):  pass
+class AuthenticationError(Exception):  pass
+class RequestError(Exception):  pass
+
 
 EXIT_CODES = {
     OptionsError: 2,
@@ -154,6 +156,7 @@ def upload_youtube_video(youtube, options, video_path, total_videos, index):
         progress.finish()
     return video_id
 
+
 def get_youtube_handler(options):
     """Return the API Youtube object."""
     home = os.path.expanduser("~")
@@ -190,16 +193,30 @@ def run_delete_main(parser, options, args, output=sys.stdout):
         debug(f"error happend {e}, stop.")
 
 
+def run_update_main(parser, options, args, output=sys.stdout):
+    youtube = get_youtube_handler(options)
+    if not youtube:
+        raise AuthenticationError("Cannot get youtube resource")
+
+    debug("Going to Update Video: {0}".format(options.update_id))
+    try:
+        youtube.videos().update(id=options.update_id, onBehalfOfContentOwner=None).execute()
+        debug(f"Video {options.update_id} updated successfully.")
+    except Exception as e:
+        debug(f"error happened {e}, stop.")
+
+
 def run_upload_main(parser, options, args, output=sys.stdout):
     """Run the main scripts from the parsed options/args."""
     parse_options_error(parser, options)
     youtube = get_youtube_handler(options)
 
     if youtube:
-        for index, video_path in enumerate(args):
-            video_id = upload_youtube_video(youtube, options, video_path, len(args), index)
-            video_url = WATCH_VIDEO_URL.format(id=video_id)
-            debug("Video URL: {0}".format(video_url))
+        if options.operation == 'upload':
+            for index, video_path in enumerate(args):
+                video_id = upload_youtube_video(youtube, options, video_path, len(args), index)
+                video_url = WATCH_VIDEO_URL.format(id=video_id)
+                debug("Video URL: {0}".format(video_url))
             if options.open_link:
                 open_link(video_url)  # Opens the Youtube Video's link in a webbrowser
 
@@ -228,7 +245,8 @@ def main(arguments):
 
     Upload videos to Youtube."""
     parser = optparse.OptionParser(usage)
-
+    parser.add_option('-op', '--operation', type='string', dest='operation', help='operation type', default='upload', choices=('upload', 'delete_video', 'update_video'))
+    parser.add_option('--update-id', type="string", dest="update_id", help="Video id to update")
     # Video metadata
     parser.add_option('--delete-id', type="string", dest="delete_id", help="Video id to delete")
     parser.add_option('-t', '--title', dest='title', type="string",
@@ -293,9 +311,11 @@ def main(arguments):
         if options.delete_id:
             debug("Running delete.")
             run_delete_main(parser, options, args)
-        else:
+        elif options.operation == 'upload':
             debug("Running upload.")
             run_upload_main(parser, options, args)
+        else options.operation == 'update_video':
+            run_update_main(parser, options, args)
     except googleapiclient.errors.HttpError as error:
         response = bytes.decode(error.content, encoding=lib.get_encoding()).strip()
         raise RequestError(u"Server response: {0}".format(response))
